@@ -8,3 +8,9 @@ services:
       - ./:/usr/share/nginx/html
       - ./docker/default.conf:/etc/nginx/conf.d/default.conf
     restart: always
+    networks:
+      - proxymng
+
+networks:
+  proxymng:
+    external: true
