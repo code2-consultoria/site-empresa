@@ -1,9 +1,10 @@
 services:
   www:
     image: nginx:latest
-    ports:
-      - "3030:80" # Mapeia a porta 80 do container para a porta 8080 do host
+    #ports:
+    #  - "3030:8080" # Mapeia a porta 80 do container para a porta 8080 do host
     volumes:
       # - ./index.html:/usr/share/nginx/html/index.html
       - ./:/usr/share/nginx/html
+      - ./docker/default.conf:/etc/nginx/conf.d/default.conf
     restart: always
