@@ -1,0 +1,63 @@
+# GitHub Actions - Deploy Site Estático Code2
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  # Validação básica do HTML
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Verificar arquivos essenciais
+        run: |
+          echo "Verificando arquivos..."
+          if [ ! -f "index.html" ]; then
+            echo "Erro: index.html não encontrado!"
+            exit 1
+          fi
+          if [ ! -f "docker-compose.yml" ]; then
+            echo "Erro: docker-compose.yml não encontrado!"
+            exit 1
+          fi
+          if [ ! -f "docker/default.conf" ]; then
+            echo "Erro: docker/default.conf não encontrado!"
+            exit 1
+          fi
+          echo "Todos os arquivos essenciais encontrados!"
+
+      - name: Validar HTML
+        uses: Cyb3r-Jak3/html5validator-action@v7.2.0
+        with:
+          root: .
+          css: false
+
+  # Deploy (apenas em push para main)
+  deploy:
+    needs: validate
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Deploy para servidor
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd ~/site-code2
+            git pull origin main
+            docker compose up -d --force-recreate
+            echo "Deploy concluído!"

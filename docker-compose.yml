@@ -1,6 +1,7 @@
 services:
   www:
     image: nginx:latest
+    container_name: www-code2
     #ports:
     #  - "3030:8080" # Mapeia a porta 80 do container para a porta 8080 do host
     volumes:
