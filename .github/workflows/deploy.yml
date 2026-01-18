@@ -52,7 +52,17 @@ jobs:
       - name: Checkout código
         uses: actions/checkout@v4
 
-      - name: Deploy para servidor
+      - name: Copiar arquivos para servidor
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "."
+          target: "~/site-code2"
+          overwrite: true
+
+      - name: Reiniciar container
         uses: appleboy/ssh-action@v1.0.0
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -60,7 +70,5 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd ~/site-code2
-            ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts 2>/dev/null
-            git pull origin main
             docker-compose up -d --force-recreate
             echo "Deploy concluído!"
