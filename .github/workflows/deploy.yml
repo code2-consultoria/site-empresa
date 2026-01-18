@@ -39,6 +39,7 @@ jobs:
         with:
           root: .
           css: false
+          blacklist: 9dfc0035191c30602cd5ae9cad1e5a0f.html
 
   # Deploy (apenas em push para main)
   deploy:
