@@ -70,5 +70,5 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd ~/site-code2
-            docker-compose up -d --force-recreate
+            docker compose up -d --force-recreate
             echo ">>>> Deploy concluído!"
