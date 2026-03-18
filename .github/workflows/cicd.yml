@@ -1,0 +1,277 @@
+# GitHub Actions - CI/CD Site Estático Code2
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  REGISTRY: ghcr.io
+  DOCKER_IMAGE: ghcr.io/${{ github.repository }}
+
+jobs:
+  validate:
+    name: Validar HTML
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Verificar arquivos essenciais
+        run: |
+          echo "Verificando arquivos..."
+          if [ ! -f "index.html" ]; then
+            echo "Erro: index.html não encontrado!"
+            exit 1
+          fi
+          if [ ! -f "Dockerfile" ]; then
+            echo "Erro: Dockerfile não encontrado!"
+            exit 1
+          fi
+          if [ ! -f "docker/default.conf" ]; then
+            echo "Erro: docker/default.conf não encontrado!"
+            exit 1
+          fi
+          echo "Todos os arquivos essenciais encontrados!"
+
+      - name: Validar HTML
+        uses: Cyb3r-Jak3/html5validator-action@v7.2.0
+        with:
+          root: .
+          css: false
+          blacklist: 9dfc0035191c30602cd5ae9cad1e5a0f.html
+
+  build-pr:
+    name: Build Docker (PR Validation)
+    runs-on: ubuntu-latest
+    needs: [validate]
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image (no push)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          push: false
+          tags: ${{ env.DOCKER_IMAGE }}:pr-${{ github.event.number }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  build-and-push:
+    name: Build and Push Docker Image
+    runs-on: ubuntu-latest
+    needs: [validate]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: production
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: |
+            ${{ env.DOCKER_IMAGE }}:production
+            ${{ env.DOCKER_IMAGE }}:build-${{ github.run_number }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: production
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Copiar docker-compose para servidor
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          source: "docker-compose.github.yml"
+          target: "/home/evaldobarbosa/site-code2"
+          overwrite: true
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          envs: GITHUB_TOKEN
+          script: |
+            cd /home/evaldobarbosa/site-code2
+
+            # Login no GitHub Container Registry
+            echo "$GITHUB_TOKEN" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+            # Pull da nova imagem e restart
+            docker compose -f docker-compose.github.yml pull
+            docker compose -f docker-compose.github.yml up -d --force-recreate
+
+            echo ">>>> Deploy concluído!"
+
+  notify:
+    name: Notify Telegram
+    runs-on: ubuntu-latest
+    if: always() && github.event_name == 'push'
+    needs: [validate, build-and-push, deploy]
+    environment: production
+
+    steps:
+      - name: Get workflow conclusion
+        id: conclusion
+        run: |
+          FAILED_JOB=""
+          FAILED_REASON=""
+
+          if [ "${{ needs.validate.result }}" == "failure" ]; then
+            FAILED_JOB="Validate"
+            FAILED_REASON="Validação HTML falhou"
+          elif [ "${{ needs.build-and-push.result }}" == "failure" ]; then
+            FAILED_JOB="Build Docker"
+            FAILED_REASON="Falha ao construir imagem Docker"
+          elif [ "${{ needs.deploy.result }}" == "failure" ]; then
+            FAILED_JOB="Deploy"
+            FAILED_REASON="Falha no deploy para produção"
+          fi
+
+          if [ -n "$FAILED_JOB" ]; then
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "failed_job=$FAILED_JOB" >> $GITHUB_OUTPUT
+            echo "failed_reason=$FAILED_REASON" >> $GITHUB_OUTPUT
+          else
+            echo "status=success" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check Telegram secrets
+        id: telegram-check
+        run: |
+          if [ -z "${{ secrets.TELEGRAM_BOT_TOKEN }}" ]; then
+            echo "::warning::TELEGRAM_BOT_TOKEN não configurado"
+            echo "configured=false" >> $GITHUB_OUTPUT
+          elif [ -z "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
+            echo "::warning::TELEGRAM_CHAT_ID não configurado"
+            echo "configured=false" >> $GITHUB_OUTPUT
+          else
+            echo "configured=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send Telegram notification (Success)
+        if: steps.conclusion.outputs.status == 'success' && steps.telegram-check.outputs.configured == 'true'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            *Pipeline site-code2*
+
+            *Status:* Sucesso
+            *Branch:* `${{ github.ref_name }}`
+            *Commit:* `${{ github.sha }}`
+            *Autor:* ${{ github.actor }}
+
+            [Ver no GitHub](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+      - name: Send Telegram notification (Failure)
+        if: steps.conclusion.outputs.status == 'failure' && steps.telegram-check.outputs.configured == 'true'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            *Pipeline site-code2*
+
+            *Status:* Falhou
+            *Etapa:* ${{ steps.conclusion.outputs.failed_job }}
+            *Motivo:* ${{ steps.conclusion.outputs.failed_reason }}
+            *Branch:* `${{ github.ref_name }}`
+            *Commit:* `${{ github.sha }}`
+            *Autor:* ${{ github.actor }}
+
+            [Ver detalhes](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+  notify-pr:
+    name: Notify PR Status
+    runs-on: ubuntu-latest
+    if: always() && github.event_name == 'pull_request'
+    needs: [validate, build-pr]
+    environment: production
+
+    steps:
+      - name: Get workflow conclusion
+        id: conclusion
+        run: |
+          if [ "${{ needs.validate.result }}" == "failure" ]; then
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "failed_reason=Validação HTML falhou" >> $GITHUB_OUTPUT
+          elif [ "${{ needs.build-pr.result }}" == "failure" ]; then
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "failed_reason=Build Docker falhou" >> $GITHUB_OUTPUT
+          else
+            echo "status=success" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check Telegram secrets
+        id: telegram-check
+        run: |
+          if [ -z "${{ secrets.TELEGRAM_BOT_TOKEN }}" ] || [ -z "${{ secrets.TELEGRAM_CHAT_ID }}" ]; then
+            echo "configured=false" >> $GITHUB_OUTPUT
+          else
+            echo "configured=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send Telegram notification (PR)
+        if: steps.telegram-check.outputs.configured == 'true'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            ${{ steps.conclusion.outputs.status == 'success' && '✅' || '❌' }} *Pull Request #${{ github.event.number }}*
+
+            *Status:* ${{ steps.conclusion.outputs.status == 'success' && 'Validação OK' || 'Falhou' }}
+            ${{ steps.conclusion.outputs.status == 'failure' && format('*Motivo:* {0}', steps.conclusion.outputs.failed_reason) || '' }}
+            *PR:* ${{ github.event.pull_request.title }}
+            *Autor:* ${{ github.actor }}
+
+            [Ver PR](${{ github.event.pull_request.html_url }})

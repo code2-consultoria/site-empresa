@@ -1,0 +1,11 @@
+services:
+  www:
+    image: ghcr.io/code2-consultoria/site-empresa:production
+    container_name: www-code2
+    restart: always
+    networks:
+      - proxymng
+
+networks:
+  proxymng:
+    external: true
