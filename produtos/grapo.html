@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html class="light" lang="pt-br">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Grapo - Gestão de Estoque e ROI | Code2</title>
+    <meta name="description" content="Grapo - Sistema inteligente de gestão de estoque com análise de ocupação e ROI produto a produto para maximizar seus resultados."/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#001f3d",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#0f1923",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-background-light text-slate-900 antialiased">
+    <!-- Navigation -->
+    <header class="sticky top-0 z-50 w-full border-b border-primary/10 bg-background-light/80 backdrop-blur-md">
+        <nav class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+            <a href="../index.html" class="flex items-center gap-2 group cursor-pointer">
+                <div class="bg-primary p-1.5 rounded-lg">
+                    <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M6 6H42L36 24L42 42H6L12 24L6 6Z" fill="currentColor"></path>
+                    </svg>
+                </div>
+                <span class="text-2xl font-black tracking-tight text-primary">Code2</span>
+            </a>
+            <div class="hidden md:flex items-center gap-10">
+                <a class="text-sm font-semibold hover:text-primary transition-colors" href="../index.html#services">Serviços</a>
+                <a class="text-sm font-semibold hover:text-primary transition-colors" href="../index.html#products">Produtos</a>
+                <a class="text-sm font-semibold hover:text-primary transition-colors" href="../index.html#about">Sobre</a>
+                <a class="bg-primary text-white px-6 py-2.5 rounded-full text-sm font-bold hover:opacity-90 transition-all shadow-lg shadow-primary/20" href="../index.html#contact">Fale conosco</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="py-24 bg-gradient-to-br from-primary/5 to-transparent">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex items-center gap-4 mb-8">
+                <a href="../index.html" class="text-slate-500 hover:text-primary transition-colors">Home</a>
+                <span class="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
+                <a href="../index.html#products" class="text-slate-500 hover:text-primary transition-colors">Produtos</a>
+                <span class="material-symbols-outlined text-slate-400 text-sm">chevron_right</span>
+                <span class="text-primary font-semibold">Grapo</span>
+            </div>
+            <div class="grid lg:grid-cols-2 gap-16 items-center">
+                <div>
+                    <div class="w-20 h-20 bg-primary/10 rounded-3xl flex items-center justify-center mb-8 overflow-hidden">
+                        <img src="../imagens/produtos/grapo.png" alt="Grapo" class="w-16 h-16 object-contain"/>
+                    </div>
+                    <h1 class="text-5xl font-bold text-primary mb-6">Grapo</h1>
+                    <p class="text-xl text-slate-600 leading-relaxed mb-8">Sistema inteligente de gestão de estoque com análise de ocupação e ROI produto a produto. Tome decisões estratégicas baseadas em dados reais do seu negócio.</p>
+                    <a href="https://grapo.app" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 bg-primary text-white px-8 py-4 rounded-full font-bold hover:opacity-90 transition-all shadow-lg shadow-primary/20">
+                        Conheça agora!
+                        <span class="material-symbols-outlined">arrow_forward</span>
+                    </a>
+                </div>
+                <div class="bg-white p-10 rounded-3xl border border-primary/10 shadow-xl">
+                    <h3 class="text-2xl font-bold text-primary mb-6">Por que escolher o Grapo?</h3>
+                    <ul class="space-y-4">
+                        <li class="flex items-start gap-4 p-4 bg-background-light rounded-xl">
+                            <span class="material-symbols-outlined text-primary text-2xl">check_circle</span>
+                            <div>
+                                <h4 class="font-bold text-primary mb-1">ROI por Produto</h4>
+                                <p class="text-slate-600 text-sm">Analise o retorno sobre investimento de cada produto individualmente.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-4 p-4 bg-background-light rounded-xl">
+                            <span class="material-symbols-outlined text-primary text-2xl">check_circle</span>
+                            <div>
+                                <h4 class="font-bold text-primary mb-1">Ocupação de Estoque</h4>
+                                <p class="text-slate-600 text-sm">Visualize como seu espaço de estoque está sendo utilizado e otimize a alocação.</p>
+                            </div>
+                        </li>
+                        <li class="flex items-start gap-4 p-4 bg-background-light rounded-xl">
+                            <span class="material-symbols-outlined text-primary text-2xl">check_circle</span>
+                            <div>
+                                <h4 class="font-bold text-primary mb-1">Decisões Estratégicas</h4>
+                                <p class="text-slate-600 text-sm">Dados claros e objetivos para ajudar na tomada de decisões do seu negócio.</p>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Details Section -->
+    <section class="py-24">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-white p-8 rounded-2xl border border-primary/10">
+                    <span class="material-symbols-outlined text-primary text-4xl mb-4">inventory_2</span>
+                    <h3 class="text-xl font-bold text-primary mb-3">Gestão de Estoque</h3>
+                    <p class="text-slate-600">Controle completo do seu inventário com rastreamento em tempo real de entradas e saídas.</p>
+                </div>
+                <div class="bg-white p-8 rounded-2xl border border-primary/10">
+                    <span class="material-symbols-outlined text-primary text-4xl mb-4">monitoring</span>
+                    <h3 class="text-xl font-bold text-primary mb-3">Análise de Performance</h3>
+                    <p class="text-slate-600">Métricas detalhadas de desempenho para cada produto do seu catálogo.</p>
+                </div>
+                <div class="bg-white p-8 rounded-2xl border border-primary/10">
+                    <span class="material-symbols-outlined text-primary text-4xl mb-4">insights</span>
+                    <h3 class="text-xl font-bold text-primary mb-3">Relatórios Inteligentes</h3>
+                    <p class="text-slate-600">Dashboards e relatórios que transformam dados em insights acionáveis.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="py-24 bg-primary">
+        <div class="max-w-4xl mx-auto px-6 text-center">
+            <h2 class="text-4xl font-bold text-white mb-6">Maximize o ROI do seu estoque!</h2>
+            <p class="text-xl text-white/80 mb-10">Descubra quais produtos realmente trazem resultado para o seu negócio.</p>
+            <a href="https://grapo.app" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 bg-white text-primary px-8 py-4 rounded-full font-bold hover:opacity-90 transition-all">
+                Conheça agora!
+                <span class="material-symbols-outlined">arrow_forward</span>
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-primary/5 py-12">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                <a href="../index.html" class="flex items-center gap-2">
+                    <div class="bg-primary p-1.5 rounded-lg">
+                        <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M6 6H42L36 24L42 42H6L12 24L6 6Z" fill="currentColor"></path>
+                        </svg>
+                    </div>
+                    <span class="text-2xl font-black tracking-tight text-primary">Code2</span>
+                </a>
+                <p class="text-sm text-slate-400">© 2024 Code2 Tecnologia Ltda. Todos os direitos reservados.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- WhatsApp FAB -->
+    <a href="https://wa.me/5598984690450?text=Vim%20do%20site%20e%20quero%20informa%C3%A7%C3%B5es%20sobre%20o%20Grapo" target="_blank" class="fixed bottom-6 right-6 w-16 h-16 bg-green-500 rounded-full flex items-center justify-center shadow-lg hover:bg-green-600 transition-colors z-50">
+        <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+        </svg>
+    </a>
+</body>
+</html>

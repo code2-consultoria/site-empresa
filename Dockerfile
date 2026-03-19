@@ -6,6 +6,7 @@ RUN rm -rf /usr/share/nginx/html/*
 # Copia arquivos do site
 COPY index.html /usr/share/nginx/html/
 COPY servicos/ /usr/share/nginx/html/servicos/
+COPY produtos/ /usr/share/nginx/html/produtos/
 COPY imagens/ /usr/share/nginx/html/imagens/
 COPY 9dfc0035191c30602cd5ae9cad1e5a0f.html /usr/share/nginx/html/
 
