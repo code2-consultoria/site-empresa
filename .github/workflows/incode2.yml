@@ -82,7 +82,7 @@ jobs:
     name: Notify Telegram
     runs-on: ubuntu-latest
     if: always() && github.event_name == 'push'
-    needs: [validate, build-and-push, deploy]
+    needs: [validate, build-and-push]
     environment: production
 
     steps:
