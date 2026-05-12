@@ -1,10 +1,31 @@
+# services:
+#   www:
+#     image: ghcr.io/code2-consultoria/site-empresa:production
+#     container_name: www-code2
+#     restart: always
+#     networks:
+#       - proxymng
+
 services:
   www:
-    image: ghcr.io/code2-consultoria/site-empresa:production
+    image: ghcr.io/${GITHUB_REPOSITORY}:${TAG:-production}
     container_name: www-code2
-    restart: always
+    env_file:
+      - .env
     networks:
       - proxymng
+    labels:
+      # Identificador do servico principal
+      incode2.main_service: "true"
+
+      # Configuracao de Health Check
+      incode2.health_check.enabled: "true"
+      incode2.health_check.path: "/health"
+      incode2.health_check.port: "8080"
+      incode2.health_check.expected_status: "200"
+      incode2.health_check.timeout: "5"
+      incode2.health_check.retries: "10"
+      incode2.health_check.interval: "5"
 
 networks:
   proxymng:
