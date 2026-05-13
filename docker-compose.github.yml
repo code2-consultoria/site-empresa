@@ -27,7 +27,7 @@ services:
 
       # Configuracao de Health Check
       incode2.health_check.enabled: "true"
-      incode2.health_check.path: "/health"
+      incode2.health_check.path: "/"
       incode2.health_check.port: "8080"
       incode2.health_check.expected_status: "200"
       incode2.health_check.timeout: "5"
