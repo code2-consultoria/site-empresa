@@ -1,16 +1,25 @@
-# GitHub Actions - CI/CD Site Estático Code2
-name: CI/CD
+# incode2 deployment pipeline
+# ============================================================
+# Required GitHub Secrets:
+#   INCODE2_URL          - URL do servidor incode2 (ex: https://deploy.example.com)
+#   INCODE2_API_TOKEN    - Token de API para autenticacao
+#   INCODE2_WEBHOOK_KEY  - Chave para assinatura HMAC do webhook (opcional)
+# ============================================================
+
+name: incode2-deploy
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main    # Altere para a branch desejada
+      - staging # Adicione mais branches conforme necessario
 
 env:
   REGISTRY: ghcr.io
-  DOCKER_IMAGE: ghcr.io/${{ github.repository }}
+  IMAGE_NAME: code2-consultoria/site-empresa
 
 jobs:
-  validate:
+validate:
     name: Validar HTML
     runs-on: ubuntu-latest
 
@@ -41,43 +50,60 @@ jobs:
           root: .
           css: false
           blacklist: 9dfc0035191c30602cd5ae9cad1e5a0f.html
-
-  build-and-push:
-    name: Build and Push Docker Image
+          
+  build-and-deploy:
     runs-on: ubuntu-latest
-    needs: [validate]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    environment: production
     permissions:
       contents: read
       packages: write
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to GitHub Container Registry
+      - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=
+            type=raw,value=latest
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: Dockerfile
           push: true
-          tags: |
-            ${{ env.DOCKER_IMAGE }}:production
-            ${{ env.DOCKER_IMAGE }}:build-${{ github.run_number }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
 
+      - name: Trigger incode2 deploy
+        env:
+          PAYLOAD: |
+            {
+              "project": "site-code2",
+              "branch": "${{ github.ref_name }}",
+              "commit_sha": "${{ github.sha }}",
+              "commit_message": "${{ github.event.head_commit.message }}",
+              "docker_image": "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+            }
+        run: |
+          # Gerar assinatura HMAC-SHA256
+          SIGNATURE=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "${{ secrets.INCODE2_WEBHOOK_KEY }}" | sed 's/SHA2-256(stdin)= //')
+
+          curl -X POST "${{ secrets.INCODE2_URL }}/deploy/trigger" \
+            -H "Authorization: Bearer ${{ secrets.INCODE2_API_TOKEN }}" \
+            -H "X-Hub-Signature-256: sha256=$SIGNATURE" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD"
   notify:
     name: Notify Telegram
     runs-on: ubuntu-latest
