@@ -1,9 +1,10 @@
 # incode2 deployment pipeline
 # ============================================================
 # Required GitHub Secrets:
-#   INCODE2_URL          - URL do servidor incode2 (ex: https://deploy.example.com)
 #   INCODE2_API_TOKEN    - Token de API para autenticacao
 #   INCODE2_WEBHOOK_KEY  - Chave para assinatura HMAC do webhook (opcional)
+#   TELEGRAM_BOT_TOKEN   - Token do bot do Telegram (opcional)
+#   TELEGRAM_CHAT_ID     - ID do chat do Telegram (opcional)
 # ============================================================
 
 name: incode2-deploy
@@ -18,6 +19,7 @@ env:
   ENV_NAME: production
   REGISTRY: ghcr.io
   DOCKER_IMAGE: ghcr.io/${{ github.repository }}
+  INCODE2_URL: https://in.code2.dev
 
 jobs:
   validate:
@@ -101,7 +103,7 @@ jobs:
           # Gerar assinatura HMAC-SHA256
           SIGNATURE=$(echo -n "$PAYLOAD" | openssl dgst -sha256 -hmac "${{ secrets.INCODE2_WEBHOOK_KEY }}" | sed 's/SHA2-256(stdin)= //')
 
-          curl -X POST "${{ secrets.INCODE2_URL }}/deploy/trigger" \
+          curl -X POST "${{ env.INCODE2_URL }}/deploy/trigger" \
             -H "Authorization: Bearer ${{ secrets.INCODE2_API_TOKEN }}" \
             -H "X-Hub-Signature-256: sha256=$SIGNATURE" \
             -H "Content-Type: application/json" \
