@@ -96,7 +96,7 @@ jobs:
               "project": "site-code2",
               "branch": "${{ github.ref_name }}",
               "commit_sha": "${{ github.sha }}",
-              "commit_message": "${{ github.event.head_commit.message }}",
+              "commit_message": ${{ toJSON(github.event.head_commit.message) }},
               "docker_image": "${{ env.DOCKER_IMAGE }}:${{ env.ENV_NAME }}"
             }
         run: |
@@ -122,6 +122,7 @@ jobs:
             echo "::error::incode2 API retornou erro HTTP $HTTP_STATUS"
             exit 1
           fi
+
   notify:
     name: Notify Telegram
     runs-on: ubuntu-latest
@@ -142,9 +143,6 @@ jobs:
           elif [ "${{ needs.build-and-deploy.result }}" == "failure" ]; then
             FAILED_JOB="Build Docker"
             FAILED_REASON="Falha ao construir imagem Docker"
-          # elif [ "${{ needs.deploy.result }}" == "failure" ]; then
-          #   FAILED_JOB="Deploy"
-          #   FAILED_REASON="Falha no deploy para produção"
           fi
 
           if [ -n "$FAILED_JOB" ]; then
