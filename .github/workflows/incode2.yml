@@ -15,8 +15,9 @@ on:
       - staging # Adicione mais branches conforme necessario
 
 env:
+  ENV_NAME: production
   REGISTRY: ghcr.io
-  IMAGE_NAME: code2-consultoria/site-empresa
+  DOCKER_IMAGE: ghcr.io/${{ github.repository }}
 
 jobs:
   validate:
@@ -50,9 +51,12 @@ jobs:
           root: .
           css: false
           blacklist: 9dfc0035191c30602cd5ae9cad1e5a0f.html
-          
+
   build-and-deploy:
+    name: Build and Deploy
     runs-on: ubuntu-latest
+    needs: [validate]
+    environment: production
     permissions:
       contents: read
       packages: write
@@ -61,6 +65,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -68,22 +75,17 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Extract metadata (tags, labels)
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=sha,prefix=
-            type=raw,value=latest
-
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: Dockerfile
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: |
+            ${{ env.DOCKER_IMAGE }}:${{ env.ENV_NAME }}
+            ${{ env.DOCKER_IMAGE }}:build-${{ github.run_number }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Trigger incode2 deploy
         env:
@@ -93,7 +95,7 @@ jobs:
               "branch": "${{ github.ref_name }}",
               "commit_sha": "${{ github.sha }}",
               "commit_message": "${{ github.event.head_commit.message }}",
-              "docker_image": "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}"
+              "docker_image": "${{ env.DOCKER_IMAGE }}:${{ env.ENV_NAME }}"
             }
         run: |
           # Gerar assinatura HMAC-SHA256
