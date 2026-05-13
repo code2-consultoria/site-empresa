@@ -108,7 +108,7 @@ jobs:
     name: Notify Telegram
     runs-on: ubuntu-latest
     if: always() && github.event_name == 'push'
-    needs: [validate, build-and-push]
+    needs: [validate, build-and-deploy]
     environment: production
 
     steps:
@@ -121,7 +121,7 @@ jobs:
           if [ "${{ needs.validate.result }}" == "failure" ]; then
             FAILED_JOB="Validate"
             FAILED_REASON="Validação HTML falhou"
-          elif [ "${{ needs.build-and-push.result }}" == "failure" ]; then
+          elif [ "${{ needs.build-and-deploy.result }}" == "failure" ]; then
             FAILED_JOB="Build Docker"
             FAILED_REASON="Falha ao construir imagem Docker"
           # elif [ "${{ needs.deploy.result }}" == "failure" ]; then
